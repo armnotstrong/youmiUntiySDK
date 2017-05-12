@@ -1,0 +1,101 @@
+apply plugin: 'com.android.application'
+
+buildscript {
+	repositories {
+		jcenter()
+		mavenCentral()
+	}
+	dependencies {
+		classpath 'com.android.tools.build:gradle:2.2.2'
+	}
+}
+
+def buildTime() {
+	return new Date().format('yyyy-MM-dd');
+}
+
+android {
+	compileSdkVersion 24
+	buildToolsVersion "25.0.2"
+
+	defaultConfig {
+//		jackOptions {
+//			enabled true
+//		}
+	}
+
+	/**
+	 * 由于使用Jack打包并开启混淆时，在处理 Unity3d Android 类库过程中出现以下异常，所以不使用Jack工具进行打包
+	 * Error:Execution failed for task ':ydunity3ddemo:YoumiUnity3dAndroidDemo:transformJackWithJackForRelease'.
+	 * > com.android.sched.scheduler.RunnerProcessException: Error during 'Keeper' runner on 'class com.unity3d.player
+	 * .UnityPlayer$6': Unexpected error during visit: com.android.jack.ir.ast.JDynamicCastOperation at "Unknown source info"
+	 */
+	compileOptions {
+		encoding "UTF-8"
+//		sourceCompatibility JavaVersion.VERSION_1_8
+//		targetCompatibility JavaVersion.VERSION_1_8
+	}
+
+	sourceSets {
+		main {
+			manifest.srcFile 'AndroidManifest.xml'
+			java.srcDirs = ['src']
+			res.srcDirs = ['res']
+			assets.srcDirs = ['assets']
+			jniLibs.srcDirs = ['libs']
+		}
+	}
+
+	signingConfigs {
+		release {
+			if (project.hasProperty("RELEASE_STORE_FILE")) {
+				storeFile file(RELEASE_STORE_FILE)
+				storePassword RELEASE_STORE_PASSWORD
+				keyAlias RELEASE_KEY_ALIAS
+				keyPassword RELEASE_KEY_PASSWORD
+			}
+		}
+	}
+
+	buildTypes {
+		release {
+			proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-project.txt'
+			if (project.hasProperty("RELEASE_STORE_FILE")) {
+				minifyEnabled true
+				signingConfig signingConfigs.release
+			}
+		}
+	}
+
+	applicationVariants.all { variant ->
+		variant.outputs.each { output ->
+			if (output.outputFile != null && output.outputFile.name.endsWith('.apk')) {
+				if (output.outputFile.name.contains(variant.buildType.name)) {
+					def apkFile = new File(output.outputFile.getParent(),
+							"YoumiUnity3dDemo_${variant.buildType.name}_${variant.versionName}_${buildTime()}.apk")
+					output.outputFile = apkFile
+				}
+			}
+		}
+	}
+}
+
+dependencies {
+	compile fileTree(dir: 'libs', include: ['*.jar'])
+	compile 'com.android.support:support-v4:24.2.1'
+}
+
+//---------------------生成给Unity3d调用的Jar包------------------------------------------
+
+task deleteOldJar(type: Delete) {
+	delete 'build/outputs/jar'
+}
+
+task buildJar(type: Jar, dependsOn: ['deleteOldJar', 'compileReleaseSources']) {
+	archiveName = 'youmi_ad_sdk_android.jar'
+	destinationDir = file 'build/outputs/jars'
+
+	from 'build/intermediates/classes/release'
+	include 'com/wawagame/app/youmiad/MainActivity*.class'
+	include 'com/wawagame/app/youmiad/PermissionHelper*.class'
+}
