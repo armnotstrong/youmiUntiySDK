@@ -57,7 +57,9 @@ public class MainActivity extends UnityPlayerActivity implements PointsChangeNot
 	private Context mContext;
 	
 	private PermissionHelper mPermissionHelper;
-	
+
+    protected final String mSyncGameObject= "youmiADS";
+    protected final Boolean mIsDebug = true;
 	/**
 	 * 广告条视图
 	 */
@@ -169,11 +171,13 @@ public class MainActivity extends UnityPlayerActivity implements PointsChangeNot
 		SpotManager.getInstance(mContext).showSpot(mContext, new SpotListener() {
 			@Override
 			public void onShowSuccess() {
-				showToastOnUiThread("插屏展示成功", Toast.LENGTH_SHORT);
+                UnityPlayer.UnitySendMessage(mSyncGameObject,"OnShowSpotAd","Success");
+                showToastOnUiThread("插屏展示成功", Toast.LENGTH_SHORT);
 			}
 			
 			@Override
 			public void onShowFailed(int errorCode) {
+                UnityPlayer.UnitySendMessage(mSyncGameObject,"OnShowSpotAdFailed",String.valueOf(errorCode));
 				switch (errorCode) {
 				case ErrorCode.NON_NETWORK:
 					showToastOnUiThread("插屏展示失败 - 网络异常", Toast.LENGTH_LONG);
@@ -198,11 +202,13 @@ public class MainActivity extends UnityPlayerActivity implements PointsChangeNot
 			
 			@Override
 			public void onSpotClosed() {
+                UnityPlayer.UnitySendMessage(mSyncGameObject,"OnShowSpotAd","Closed");
 				showToastOnUiThread("插屏被关闭", Toast.LENGTH_SHORT);
 			}
 			
 			@Override
 			public void onSpotClicked(boolean isWebPage) {
+                UnityPlayer.UnitySendMessage(mSyncGameObject,"OnShowSpotAd","Clicked");
 				showToastOnUiThread("插屏被点击", Toast.LENGTH_SHORT);
 			}
 		});
@@ -237,16 +243,20 @@ public class MainActivity extends UnityPlayerActivity implements PointsChangeNot
 				.showVideoAd(mContext, videoAdSettings, new VideoAdListener() {
 					@Override
 					public void onPlayStarted() {
+
+                        UnityPlayer.UnitySendMessage(mSyncGameObject, "OnShowVideo","PlayStarted");
 						showToastOnUiThread("开始播放视频", Toast.LENGTH_SHORT);
 					}
 					
 					@Override
 					public void onPlayInterrupted() {
+                        UnityPlayer.UnitySendMessage(mSyncGameObject, "OnShowVideo","Interrupted");
 						showToastOnUiThread("播放视频被中断", Toast.LENGTH_LONG);
 					}
 					
 					@Override
 					public void onPlayFailed(int errorCode) {
+                        UnityPlayer.UnitySendMessage(mSyncGameObject, "OnShowVideoFailed",String.valueOf(errorCode));
 						switch (errorCode) {
 						case ErrorCode.NON_NETWORK:
 							showToastOnUiThread("视频播放失败 - 网络异常", Toast.LENGTH_LONG);
@@ -271,6 +281,7 @@ public class MainActivity extends UnityPlayerActivity implements PointsChangeNot
 					
 					@Override
 					public void onPlayCompleted() {
+                        UnityPlayer.UnitySendMessage(mSyncGameObject, "OnShowVideo","PlayCompleted");
 						showToastOnUiThread("视频播放成功", Toast.LENGTH_SHORT);
 					}
 				});
@@ -286,16 +297,19 @@ public class MainActivity extends UnityPlayerActivity implements PointsChangeNot
 					.getBannerView(mContext, new BannerViewListener() {
 						@Override
 						public void onRequestSuccess() {
+                            UnityPlayer.UnitySendMessage(mSyncGameObject, "OnShowBanner","Success");
 							showToastOnUiThread("请求广告条成功", Toast.LENGTH_SHORT);
 						}
 						
 						@Override
 						public void onSwitchBanner() {
+                            UnityPlayer.UnitySendMessage(mSyncGameObject, "OnShowBanner","Switch");
 							showToastOnUiThread("广告条切换", Toast.LENGTH_SHORT);
 						}
 						
 						@Override
 						public void onRequestFailed() {
+                            UnityPlayer.UnitySendMessage(mSyncGameObject, "OnShowBanner","Failed");
 							showToastOnUiThread("请求广告条失败", Toast.LENGTH_LONG);
 						}
 					});
@@ -532,6 +546,10 @@ public class MainActivity extends UnityPlayerActivity implements PointsChangeNot
 	}
 	
 	public void showToastOnUiThread(final String str, final int duration) {
+        Log.e("video","str:"+str);
+        if(!mIsDebug){
+            return;
+        }
 		if (Looper.myLooper() == Looper.getMainLooper()) {
 			Toast.makeText(mContext, str, duration).show();
 		} else {

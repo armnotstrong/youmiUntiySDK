@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/YoumiUnity3dAndroidDemo.iml" filepath="$PROJECT_DIR$/YoumiUnity3dAndroidDemo.iml" />
+      <module fileurl="file://$PROJECT_DIR$/youmiSdkAndorid.iml" filepath="$PROJECT_DIR$/youmiSdkAndorid.iml" />
     </modules>
   </component>
 </project>
